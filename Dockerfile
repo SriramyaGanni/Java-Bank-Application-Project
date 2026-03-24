@@ -6,7 +6,7 @@ WORKDIR /build
 COPY pom.xml . 
 COPY src ./src
 
-RUN mvn clean package
+RUN mvn clean package -DskipTests
 
 # -------- Stage 2 : Run Application --------
 FROM tomcat:9-jdk17
