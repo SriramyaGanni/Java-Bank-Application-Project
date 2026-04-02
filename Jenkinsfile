@@ -1,8 +1,6 @@
 pipeline {
     agent any
-
     stages {
-
         stage('Checkout Code') {
             steps {
                 git branch: 'main',
@@ -10,13 +8,32 @@ pipeline {
                     url: 'https://github.com/SriramyaGanni/Java-Bank-Application-Project.git'
             }
         }
-
         stage('Build Maven') {
             steps {
                 sh 'mvn clean package'
             }
         }
-
+        stage('SonarQube Analysis'){ 
+            steps { 
+                withSonarQubeEnv('SonarQube') {
+                    sh 'mvn sonar:sonar' 
+                } 
+            } 
+        } 
+        stage('Quality Gate') {
+            steps { 
+                timeout(time: 2, unit: 'MINUTES') { 
+                    waitForQualityGate abortPipeline: true 
+                }
+            }
+        }
+        stage('Artifact in Nexus') { 
+            steps { 
+                withMaven(globalMavenSettingsConfig: 'settings.xml', jdk: 'jdk17', maven: 'maven', traceability: true) { 
+                    sh 'mvn deploy' 
+                } 
+            } 
+        }
         stage('Build Docker Image') {
             steps {
                 sh 'docker build -t sriramyaganni/bank-webapp:latest .'
